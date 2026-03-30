@@ -1,0 +1,86 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# API Keys and secrets
+.env
+config.json
+secrets.json
+*_secret*
+*_token*
+*_key*
+
+# Logs
+*.log
+logs/
+car_valuation.log
+
+# Cache
+.cache/
+.pytest_cache/
+.coverage
+
+# Data files (sensitive)
+data/
+*.csv
+*.json
+test_data/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Heinrich specific
+*.openclaw
+.openclaw/
+
+# Car valuation specific
+listings_cache/
+market_data/
+scraped_data/

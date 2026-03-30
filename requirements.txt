@@ -1,0 +1,17 @@
+# Core dependencies for Heinrich Car Valuation Skill
+requests>=2.28.0
+beautifulsoup4>=4.11.0
+dataclasses>=0.6; python_version < "3.7"
+
+# Optional: For enhanced features
+urllib3>=1.26.0
+lxml>=4.9.0
+
+# Development dependencies (optional)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+black>=22.0.0
+flake8>=5.0.0
+
+# OpenClaw integration (if available)
+# openclaw>=1.0.0
