@@ -1,0 +1,35 @@
+api:
+  base_url: https://api.apify.com/v2
+  max_concurrent_requests: 2
+  max_retries: 5
+  rate_limit_delay: 3.0
+  scraper_id: swerve~yad2-vehicles
+  timeout_seconds: 60
+data:
+  max_price_threshold: 1000000
+  min_price_threshold: 5000
+  quality_score_threshold: 0.9
+monitoring:
+  alert_thresholds:
+    cpu_percent: 75.0
+    disk_percent: 85.0
+    memory_percent: 75.0
+    response_time_ms: 10000.0
+  enable_performance_tracking: true
+  health_check_interval: 30
+  log_level: INFO
+  metrics_retention_days: 90
+paths:
+  backup_dir: backups
+  base_dir: /app
+  cache_dir: cache
+  data_dir: data
+  logs_dir: logs
+  reports_dir: reports
+security:
+  input_sanitization: true
+  log_api_requests: false
+  log_rotation_count: 10
+  mask_sensitive_logs: true
+  max_log_size_mb: 50
+  token_validation: true

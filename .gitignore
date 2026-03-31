@@ -84,3 +84,7 @@ tmp/
 listings_cache/
 market_data/
 scraped_data/
+# Enterprise Logging System
+.enterprise-logs/
+.enterprise-scripts/__pycache__/
+enterprise_*.pid
