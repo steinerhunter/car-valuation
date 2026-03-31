@@ -9,7 +9,7 @@ Real-time car valuation for the Israeli market using live Yad2 data scraping.
 
 ## Overview
 
-This skill provides Heinrich with the ability to give accurate, current car valuations by scraping real-time data from Yad2 and other Israeli car listing sites. Instead of using stale datasets, it queries live market data and provides intelligent analysis.
+This skill provides OpenClaw AI assistants with the ability to give accurate, current car valuations by scraping real-time data from Yad2 and other Israeli car listing sites. Instead of using stale datasets, it queries live market data and provides intelligent analysis.
 
 **Perfect for user queries like:**
 
@@ -27,29 +27,29 @@ This skill provides Heinrich with the ability to give accurate, current car valu
 
 **🚀 NEW: WhatsApp Link Analysis (OME-94):**
 - Send any Yad2 car listing link via WhatsApp
-- Heinrich automatically analyzes the car and provides instant market comparison
+- Your AI assistant automatically analyzes the car and provides instant market comparison
 - No manual input needed - just paste the link!
 
 **WhatsApp Examples:**
-- "Heinrich, what do you think? https://yad2.co.il/ad/toyota-corolla-2019-85000"
+- "What do you think about this car? https://yad2.co.il/ad/toyota-corolla-2019-85000"
 - "מה דעתך על זה? https://yad2.co.il/vehicles/item/12345"
 - Just paste any Yad2 URL → Instant analysis!
 
 ## 🚀 WhatsApp Link Analysis (OME-94 - NEW!)
 
-Heinrich now automatically detects and analyzes Yad2 car listing links sent via WhatsApp or any chat platform!
+The AI assistant now automatically detects and analyzes Yad2 car listing links sent via WhatsApp or any chat platform!
 
 ### Quick Link Analysis
 ```python
 from scripts.yad2_link_analyzer import analyze_yad2_link
 
-# User sends: "Heinrich, מה דעתך? https://yad2.co.il/ad/toyota-corolla-2019-85000"
+# User sends: "מה דעתך על הרכב הזה? https://yad2.co.il/ad/toyota-corolla-2019-85000"
 url = "https://yad2.co.il/ad/toyota-corolla-2019-85000"
 result = analyze_yad2_link(url, hebrew_response=True)
 
 if result['status'] == 'success':
     listing = result['listing_data']
-    # Heinrich responds: "מצאתי טויוטה קורולה 2019 במחיר 85,000 ₪ - מנתח השוק..."
+    # AI responds: "מצאתי טויוטה קורולה 2019 במחיר 85,000 ₪ - מנתח השוק..."
 ```
 
 ### Automatic Detection

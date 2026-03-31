@@ -1,6 +1,6 @@
-# 🚗 Heinrich Car Valuation - Installation Guide
+# 🚗 Israeli Car Valuation - Installation Guide
 
-**Complete setup guide for installing Heinrich's Car Valuation skill**
+**Complete setup guide for installing the Car Valuation skill**
 
 ## 🎯 Quick Start (5 minutes)
 
@@ -15,8 +15,8 @@
 # Navigate to your OpenClaw skills directory
 cd ~/.openclaw/workspace/skills/
 
-# Clone the Heinrich Car Valuation skill
-git clone https://github.com/omersalomon/heinrich-car-valuation car-valuation
+# Clone the Car Valuation skill
+git clone https://github.com/steinerhunter/car-valuation car-valuation
 
 # Verify installation
 ls car-valuation/
@@ -55,8 +55,8 @@ python3 examples/basic_usage.py
 
 **Expected output**: 
 ```
-🚗 Heinrich Car Valuation - WhatsApp Demo
-========================================
+🚗 Israeli Car Valuation - WhatsApp Demo
+=========================================
 ✅ All systems operational!
 ```
 
@@ -66,12 +66,12 @@ python3 examples/basic_usage.py
 
 ### 📱 WhatsApp Link Analysis
 
-Just send Heinrich any Yad2 car listing URL in WhatsApp:
+Just send your AI assistant any Yad2 car listing URL in WhatsApp:
 
 ```
-You: "Heinrich, מה דעתך על זה? https://yad2.co.il/ad/toyota-corolla-85000"
+You: "מה דעתך על הרכב הזה? https://yad2.co.il/ad/toyota-corolla-85000"
 
-Heinrich: "🚗 מצאתי: 2019 Toyota Corolla
+AI: "🚗 מצאתי: 2019 Toyota Corolla
 💰 מחיר: 85,000 ₪
 🛣️ קילומטראז': 60,000 ק״מ
 📍 מיקום: תל אביב
@@ -85,13 +85,13 @@ Heinrich: "🚗 מצאתי: 2019 Toyota Corolla
 
 ### 💬 Car Valuation Queries
 
-Ask Heinrich about car values in Hebrew or English:
+Ask your AI assistant about car values in Hebrew or English:
 
 ```
 Hebrew: "כמה שווה טויוטה קורולה 2019 עם 60 אלף קמ?"
 English: "What's my 2019 Toyota Corolla with 60K km worth?"
 
-Heinrich provides:
+Your AI provides:
 ✅ Real-time market analysis
 ✅ Price range estimation  
 ✅ Buyer/seller recommendations
@@ -244,9 +244,9 @@ Contributions welcome! See our roadmap:
 - [ ] Environment variable `APIFY_API_TOKEN` set
 - [ ] Dependencies installed (`pip install -r requirements.txt`)
 - [ ] Test completed successfully (`python3 examples/whatsapp_demo.py`)
-- [ ] Heinrich recognizes car queries in chat
+- [ ] AI assistant recognizes car queries in chat
 
-**🎉 Ready to use Heinrich Car Valuation!**
+**🎉 Ready to use Israeli Car Valuation!**
 
 ---
 

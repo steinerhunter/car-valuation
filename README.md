@@ -2,7 +2,7 @@
 
 [![Hebrew Support](https://img.shields.io/badge/Hebrew-%E2%9C%93-blue)](README.md)
 [![WhatsApp Integration](https://img.shields.io/badge/WhatsApp-Link%20Analysis-25D366)](README.md)
-[![Heinrich AI](https://img.shields.io/badge/Heinrich-AI%20Powered-orange)](README.md)
+[![OpenClaw AI](https://img.shields.io/badge/OpenClaw-AI%20Powered-orange)](README.md)
 
 Real-time car valuation for the Israeli market using live Yad2 data with full Hebrew language support and WhatsApp integration.
 
@@ -10,7 +10,7 @@ Real-time car valuation for the Israeli market using live Yad2 data with full He
 
 ### ✨ **WhatsApp Link Analysis (NEW!)**
 - 📱 **Instant Analysis**: Send any Yad2 car listing link via WhatsApp
-- 🔗 **Auto-Detection**: Heinrich automatically analyzes the car and provides market comparison
+- 🔗 **Auto-Detection**: AI assistant automatically analyzes the car and provides market comparison
 - 🇮🇱 **Bilingual**: Supports Hebrew and English responses
 
 ### 🧠 **Advanced Market Intelligence**
@@ -29,22 +29,22 @@ Real-time car valuation for the Israeli market using live Yad2 data with full He
 
 ### WhatsApp Link Analysis
 ```
-You: "Heinrich, what do you think? https://yad2.co.il/ad/toyota-corolla-2019-85000"
-Heinrich: "🚗 Found 2019 Toyota Corolla for ₪85,000 - analyzing market..."
+You: "What do you think about this car? https://yad2.co.il/ad/toyota-corolla-2019-85000"
+AI: "🚗 Found 2019 Toyota Corolla for ₪85,000 - analyzing market..."
 ```
 
 ### Hebrew Queries
 ```
 User: "כמה שווה טויוטה קורולה 2019 שלי?"
-Heinrich: "🚗 ניתוח שוק: טויוטה קורולה 2019
-          📊 טווח מחירים: 82,000 - 95,000 ₪..."
+AI: "🚗 ניתוח שוק: טויוטה קורולה 2019
+     📊 טווח מחירים: 82,000 - 95,000 ₪..."
 ```
 
 ### English Queries
 ```
 User: "What's my 2019 Toyota Corolla worth?"
-Heinrich: "🚗 Market Analysis: 2019 Toyota Corolla
-          📊 Price Range: ₪82,000 - ₪95,000..."
+AI: "🚗 Market Analysis: 2019 Toyota Corolla
+     📊 Price Range: ₪82,000 - ₪95,000..."
 ```
 
 ## 🔧 Technical Stack
@@ -98,7 +98,7 @@ car-valuation/
 
 This skill integrates with Heinrich AI to provide conversational car valuations:
 
-- **Automatic Detection**: Heinrich recognizes car-related queries
+- **Automatic Detection**: AI assistant recognizes car-related queries
 - **Smart Responses**: Context-aware Hebrew/English responses  
 - **WhatsApp Ready**: Works seamlessly in WhatsApp conversations
 - **Intent Analysis**: Distinguishes buying vs selling scenarios
@@ -142,4 +142,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**🎩 Heinrich AI** - Your intelligent car market assistant for Israel
+**🚗 Israeli Car Valuation** - Your intelligent car market assistant for Israel
