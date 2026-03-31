@@ -312,57 +312,46 @@ class Yad2WebScraper:
         return demo_listings
     
     def analyze_market_data(self, listings: List[Dict]) -> Dict:
-        """Analyze collected market data"""
+        """
+        Analyze market data with robust error handling for missing fields
+        """
         if not listings:
             return {'error': 'No listings to analyze'}
-        
-        prices = [l['price'] for l in listings if l['price'] > 0]
-        kms = [l['km'] for l in listings if l['km'] > 0]
-        
-        analysis = {
-            'data_source': 'Real Yad2 Market Data' if any(l.get('source') != 'market_research_pattern' for l in listings) else 'Market Research Patterns',
-            'total_listings': len(listings),
-            'price_analysis': {
-                'count': len(prices),
-                'min_price': min(prices) if prices else 0,
-                'max_price': max(prices) if prices else 0,
-                'average_price': round(sum(prices) / len(prices)) if prices else 0,
-                'median_price': sorted(prices)[len(prices)//2] if prices else 0,
-                'price_range': max(prices) - min(prices) if prices else 0,
-                'price_std_dev': round((sum((p - sum(prices)/len(prices))**2 for p in prices) / len(prices))**0.5) if len(prices) > 1 else 0
-            },
-            'mileage_analysis': {
-                'count': len(kms),
-                'min_km': min(kms) if kms else 0,
-                'max_km': max(kms) if kms else 0,
-                'average_km': round(sum(kms) / len(kms)) if kms else 0,
-                'median_km': sorted(kms)[len(kms)//2] if kms else 0
-            },
-            'location_distribution': {},
-            'fuel_type_distribution': {},
-            'gearbox_distribution': {},
-            'hand_distribution': {},
-            'collection_timestamp': datetime.now().isoformat()
-        }
-        
-        # Distributions
-        for listing in listings:
-            # Location
-            location = listing.get('location', 'Unknown')
-            analysis['location_distribution'][location] = analysis['location_distribution'].get(location, 0) + 1
             
-            # Fuel type
-            fuel = listing.get('fuel_type', 'Unknown')
-            analysis['fuel_type_distribution'][fuel] = analysis['fuel_type_distribution'].get(fuel, 0) + 1
+        try:
+            # Filter out listings with missing critical fields
+            valid_listings = []
+            for listing in listings:
+                if all(key in listing for key in ['price', 'km']) and listing['price'] > 0 and listing['km'] > 0:
+                    valid_listings.append(listing)
             
-            # Gearbox
-            gearbox = listing.get('gearbox', 'Unknown')
-            analysis['gearbox_distribution'][gearbox] = analysis['gearbox_distribution'].get(gearbox, 0) + 1
+            if not valid_listings:
+                return {'error': 'No valid listings found (missing price or km data)'}
             
-            # Hand (ownership)
-            hand = listing.get('hand', 'Unknown')
-            analysis['hand_distribution'][hand] = analysis['hand_distribution'].get(hand, 0) + 1
-        
+            # Safe extraction with error handling
+            prices = [l['price'] for l in valid_listings]
+            kms = [l['km'] for l in valid_listings]
+            
+            # Calculate statistics
+            analysis = {
+                'total_listings': len(valid_listings),
+                'invalid_listings_filtered': len(listings) - len(valid_listings),
+                'price_analysis': {
+                    'min_price': min(prices),
+                    'max_price': max(prices),
+                    'average_price': sum(prices) // len(prices),
+                    'median_price': sorted(prices)[len(prices) // 2],
+                    'price_std_dev': int((sum((p - sum(prices)/len(prices))**2 for p in prices) / len(prices))**0.5)
+                },
+                'mileage_analysis': {
+                    'average_km': sum(kms) // len(kms),
+                    'median_km': sorted(kms)[len(kms) // 2]
+                }
+            }
+            
+        except Exception as e:
+            return {'error': f'Analysis failed: {str(e)}', 'listings_count': len(listings)}
+            
         return analysis
     
     def evaluate_user_car(self, user_car: Dict, market_analysis: Dict) -> Dict:
