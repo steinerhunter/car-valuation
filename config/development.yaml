@@ -1,0 +1,10 @@
+api:
+  max_concurrent_requests: 1
+  rate_limit_delay: 1.0
+  timeout_seconds: 30
+monitoring:
+  enable_performance_tracking: true
+  log_level: DEBUG
+security:
+  log_api_requests: true
+  max_log_size_mb: 10
