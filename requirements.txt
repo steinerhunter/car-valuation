@@ -6,6 +6,7 @@ dataclasses>=0.6; python_version < "3.7"
 # Optional: For enhanced features
 urllib3>=1.26.0
 lxml>=4.9.0
+colorama>=0.4.6
 
 # Development dependencies (optional)
 pytest>=7.0.0
