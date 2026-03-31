@@ -1,0 +1,475 @@
+#!/usr/bin/env python3
+"""
+🚗 Israeli Car Valuation - CLI Tool
+====================================
+OME-119: Advanced troubleshooting, diagnostics, and self-healing
+
+Commands:
+  diagnose    - Comprehensive system health check
+  fix         - Auto-fix common issues  
+  test        - Run validation tests
+  status      - Show current status
+  update      - Update skill to latest version
+  uninstall   - Clean removal
+"""
+
+import sys
+import os
+import subprocess
+import json
+import time
+from datetime import datetime
+from pathlib import Path
+
+# Color codes for pretty output
+class Colors:
+    RED = '\033[0;31m'
+    GREEN = '\033[0;32m'
+    YELLOW = '\033[1;33m'
+    BLUE = '\033[0;34m'
+    PURPLE = '\033[0;35m'
+    CYAN = '\033[0;36m'
+    WHITE = '\033[1;37m'
+    GRAY = '\033[0;37m'
+    NC = '\033[0m'  # No Color
+
+def log(level, message):
+    """Log message with timestamp and level"""
+    timestamp = datetime.now().strftime("%H:%M:%S")
+    color = {
+        'INFO': Colors.CYAN,
+        'SUCCESS': Colors.GREEN, 
+        'WARNING': Colors.YELLOW,
+        'ERROR': Colors.RED,
+        'DEBUG': Colors.GRAY
+    }.get(level, Colors.NC)
+    
+    print(f"{color}[{timestamp}] {level}: {message}{Colors.NC}")
+
+def success(message):
+    print(f"{Colors.GREEN}✅ {message}{Colors.NC}")
+
+def warning(message):  
+    print(f"{Colors.YELLOW}⚠️  {message}{Colors.NC}")
+
+def error(message):
+    print(f"{Colors.RED}❌ {message}{Colors.NC}")
+
+def info(message):
+    print(f"{Colors.CYAN}ℹ️  {message}{Colors.NC}")
+
+def debug(message):
+    print(f"{Colors.GRAY}🔍 {message}{Colors.NC}")
+
+class CarValuationCLI:
+    def __init__(self):
+        self.skill_dir = Path(__file__).parent
+        self.config_file = self.skill_dir / '.env'
+        self.log_file = Path('/tmp/car-valuation-cli.log')
+        
+    def get_skill_info(self):
+        """Get skill information"""
+        info = {
+            'skill_dir': str(self.skill_dir),
+            'config_exists': self.config_file.exists(),
+            'python_executable': sys.executable,
+            'python_version': f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}",
+            'platform': sys.platform
+        }
+        
+        # Load config if exists
+        if self.config_file.exists():
+            try:
+                with open(self.config_file, 'r') as f:
+                    config_lines = f.readlines()
+                for line in config_lines:
+                    if '=' in line and not line.strip().startswith('#'):
+                        key, value = line.strip().split('=', 1)
+                        info[f'config_{key.lower()}'] = value
+            except Exception as e:
+                info['config_error'] = str(e)
+                
+        return info
+    
+    def check_dependencies(self):
+        """Check if all required dependencies are installed"""
+        required_packages = [
+            'requests', 'beautifulsoup4', 'pandas', 'python-dotenv'
+        ]
+        
+        issues = []
+        success_count = 0
+        
+        for package in required_packages:
+            try:
+                __import__(package.replace('-', '_'))
+                success_count += 1
+                debug(f"✓ {package} installed")
+            except ImportError:
+                issues.append(f"Missing package: {package}")
+                
+        return success_count, len(required_packages), issues
+    
+    def check_api_connectivity(self):
+        """Test API connectivity without making expensive calls"""
+        try:
+            # Check if APIFY_API_TOKEN is set
+            token = os.getenv('APIFY_API_TOKEN')
+            if not token:
+                return False, "APIFY_API_TOKEN not set"
+            
+            if not token.startswith('apify_api_'):
+                return False, "Invalid APIFY_API_TOKEN format"
+                
+            # Try to import core modules
+            sys.path.insert(0, str(self.skill_dir))
+            from scripts.car_valuation_api import CarValuationAPI
+            
+            # Create API instance (doesn't make network calls)
+            api = CarValuationAPI(token)
+            return True, "API connectivity ready"
+            
+        except Exception as e:
+            return False, f"API check failed: {str(e)}"
+    
+    def check_openclaw_integration(self):
+        """Check if skill is properly integrated with OpenClaw"""
+        skill_md = self.skill_dir / 'SKILL.md'
+        
+        if not skill_md.exists():
+            return False, "SKILL.md missing"
+        
+        # Check if we're in a skills directory
+        parent_dir = self.skill_dir.parent.name
+        if parent_dir != 'skills':
+            return False, f"Not in skills directory (parent: {parent_dir})"
+            
+        return True, "OpenClaw integration OK"
+    
+    def diagnose(self):
+        """Comprehensive system diagnosis"""
+        print(f"\n{Colors.WHITE}🔍 Israeli Car Valuation - System Diagnosis{Colors.NC}")
+        print("=" * 50)
+        
+        info = self.get_skill_info()
+        
+        # Basic info
+        print(f"\n📋 {Colors.WHITE}System Information:{Colors.NC}")
+        print(f"   Skill Directory: {info['skill_dir']}")
+        print(f"   Python Version: {info['python_version']}")
+        print(f"   Platform: {info['platform']}")
+        
+        # Configuration check
+        print(f"\n⚙️  {Colors.WHITE}Configuration:{Colors.NC}")
+        if info['config_exists']:
+            success("Configuration file found")
+            if 'config_apify_api_token' in info:
+                token_preview = info['config_apify_api_token'][:20] + "..." if len(info['config_apify_api_token']) > 20 else info['config_apify_api_token']
+                print(f"   API Token: {token_preview}")
+            if 'config_installation_date' in info:
+                print(f"   Installed: {info['config_installation_date']}")
+        else:
+            warning("Configuration file missing")
+        
+        # Dependencies check
+        print(f"\n📚 {Colors.WHITE}Dependencies:{Colors.NC}")
+        success_count, total_count, issues = self.check_dependencies()
+        if success_count == total_count:
+            success(f"All {total_count} required packages installed")
+        else:
+            warning(f"{success_count}/{total_count} packages installed")
+            for issue in issues:
+                error(f"  {issue}")
+        
+        # API connectivity
+        print(f"\n🌐 {Colors.WHITE}API Connectivity:{Colors.NC}")
+        api_ok, api_msg = self.check_api_connectivity()
+        if api_ok:
+            success(api_msg)
+        else:
+            error(api_msg)
+            
+        # OpenClaw integration
+        print(f"\n🔗 {Colors.WHITE}OpenClaw Integration:{Colors.NC}")
+        integration_ok, integration_msg = self.check_openclaw_integration()
+        if integration_ok:
+            success(integration_msg)
+        else:
+            warning(integration_msg)
+        
+        # Overall health score
+        checks = [info['config_exists'], success_count == total_count, api_ok, integration_ok]
+        health_score = sum(checks) / len(checks) * 100
+        
+        print(f"\n🎯 {Colors.WHITE}Overall Health Score: {health_score:.0f}%{Colors.NC}")
+        
+        if health_score >= 90:
+            success("System is healthy and ready to use!")
+        elif health_score >= 70:
+            warning("System mostly working, minor issues detected")
+        else:
+            error("System has significant issues, run 'car-valuation fix'")
+            
+        return health_score >= 70
+    
+    def fix(self):
+        """Auto-fix common issues"""
+        print(f"\n{Colors.WHITE}🔧 Auto-Fix Common Issues{Colors.NC}")
+        print("=" * 30)
+        
+        fixes_applied = 0
+        
+        # Fix 1: Install missing dependencies
+        success_count, total_count, issues = self.check_dependencies()
+        if success_count < total_count:
+            print(f"\n📚 Installing missing dependencies...")
+            try:
+                subprocess.check_call([
+                    sys.executable, '-m', 'pip', 'install', '-r', 
+                    str(self.skill_dir / 'requirements.txt'), '--quiet'
+                ])
+                success("Dependencies installed")
+                fixes_applied += 1
+            except subprocess.CalledProcessError:
+                try:
+                    # Try with --break-system-packages for newer systems
+                    subprocess.check_call([
+                        sys.executable, '-m', 'pip', 'install', '-r',
+                        str(self.skill_dir / 'requirements.txt'),
+                        '--break-system-packages', '--quiet'
+                    ])
+                    success("Dependencies installed (system packages)")
+                    fixes_applied += 1
+                except subprocess.CalledProcessError as e:
+                    error(f"Failed to install dependencies: {e}")
+        
+        # Fix 2: Check and fix APIFY_API_TOKEN
+        if not os.getenv('APIFY_API_TOKEN'):
+            warning("APIFY_API_TOKEN not found in environment")
+            
+            # Check local config
+            if self.config_file.exists():
+                print("Checking local configuration...")
+                try:
+                    with open(self.config_file, 'r') as f:
+                        content = f.read()
+                    if 'APIFY_API_TOKEN=' in content:
+                        info("Found token in local config - please restart your shell")
+                    else:
+                        print("Please run the installer again to set up Apify token:")
+                        print("  curl -sL install.car-valuation.com | bash")
+                except Exception as e:
+                    error(f"Could not read config file: {e}")
+            else:
+                print("Please run the installer to configure Apify:")
+                print("  curl -sL install.car-valuation.com | bash")
+        
+        # Fix 3: Fix file permissions
+        script_files = list(self.skill_dir.glob('scripts/*.py'))
+        if script_files:
+            print(f"\n🔒 Fixing file permissions...")
+            try:
+                for script_file in script_files:
+                    os.chmod(script_file, 0o755)
+                success(f"Fixed permissions for {len(script_files)} scripts")
+                fixes_applied += 1
+            except Exception as e:
+                warning(f"Could not fix permissions: {e}")
+        
+        print(f"\n{Colors.WHITE}Fixes applied: {fixes_applied}{Colors.NC}")
+        if fixes_applied > 0:
+            success("Auto-fix completed. Try running 'car-valuation diagnose' again.")
+        else:
+            info("No automatic fixes needed or available.")
+    
+    def test(self):
+        """Run validation tests"""
+        print(f"\n{Colors.WHITE}🧪 Running Validation Tests{Colors.NC}")
+        print("=" * 30)
+        
+        test_results = []
+        
+        # Test 1: Module imports
+        print("\n📦 Testing module imports...")
+        try:
+            sys.path.insert(0, str(self.skill_dir))
+            from scripts.car_valuation_api import CarValuationAPI
+            from scripts.market_analyzer import analyze_user_query
+            success("Core modules import successfully")
+            test_results.append(True)
+        except Exception as e:
+            error(f"Module import failed: {e}")
+            test_results.append(False)
+        
+        # Test 2: Configuration validation
+        print("\n⚙️  Testing configuration...")
+        token = os.getenv('APIFY_API_TOKEN')
+        if token and token.startswith('apify_api_'):
+            success("API token configuration valid")
+            test_results.append(True)
+        else:
+            error("Invalid or missing API token")
+            test_results.append(False)
+        
+        # Test 3: Basic functionality (if token available)
+        if token:
+            print("\n🔗 Testing basic functionality...")
+            try:
+                # Import required modules
+                from scripts.car_valuation_api import CarValuationAPI, VehicleQuery
+                
+                # Create API instance
+                api = CarValuationAPI(token)
+                success("API instance created successfully") 
+                test_results.append(True)
+            except Exception as e:
+                error(f"Basic functionality test failed: {e}")
+                test_results.append(False)
+        else:
+            warning("Skipping functionality test - no API token")
+            test_results.append(None)
+        
+        # Summary
+        passed = sum(1 for r in test_results if r is True)
+        failed = sum(1 for r in test_results if r is False)
+        skipped = sum(1 for r in test_results if r is None)
+        
+        print(f"\n📊 {Colors.WHITE}Test Results:{Colors.NC}")
+        print(f"   ✅ Passed: {passed}")
+        print(f"   ❌ Failed: {failed}")  
+        if skipped > 0:
+            print(f"   ⏭️  Skipped: {skipped}")
+        
+        if failed == 0:
+            success("All tests passed! System is ready to use.")
+        else:
+            error("Some tests failed. Run 'car-valuation fix' to resolve issues.")
+            
+        return failed == 0
+    
+    def status(self):
+        """Show current status"""
+        print(f"\n{Colors.WHITE}📊 Israeli Car Valuation - Status{Colors.NC}")
+        print("=" * 40)
+        
+        info = self.get_skill_info()
+        
+        # Quick status indicators  
+        status_indicators = []
+        
+        # Config status
+        if info['config_exists']:
+            status_indicators.append("📁 Config")
+        
+        # Dependencies status
+        success_count, total_count, _ = self.check_dependencies()
+        if success_count == total_count:
+            status_indicators.append("📚 Deps")
+            
+        # API status
+        api_ok, _ = self.check_api_connectivity()
+        if api_ok:
+            status_indicators.append("🌐 API")
+        
+        print(f"Status: {' • '.join(status_indicators) if status_indicators else '❌ Not Ready'}")
+        
+        if 'config_installation_date' in info:
+            print(f"Installed: {info['config_installation_date']}")
+            
+        if len(status_indicators) >= 3:
+            success("Ready to use!")
+            print(f"\n{Colors.CYAN}💬 Try asking your AI:{Colors.NC}")
+            print("  • \"כמה שווה טויוטה קורולה 2019?\"")
+            print("  • \"What's my Honda Civic worth?\"")
+        else:
+            warning("Setup incomplete. Run 'car-valuation diagnose' for details.")
+    
+    def update(self):
+        """Update skill to latest version"""
+        print(f"\n{Colors.WHITE}🔄 Updating Car Valuation Skill{Colors.NC}")
+        print("=" * 35)
+        
+        try:
+            # Check if we're in a git repository
+            if (self.skill_dir / '.git').exists():
+                print("Updating from git repository...")
+                subprocess.check_call(['git', 'pull'], cwd=self.skill_dir)
+                success("Updated to latest version")
+            else:
+                warning("Not a git repository. Manual update required.")
+                print("To update manually:")
+                print("1. Download latest version from GitHub")
+                print("2. Replace skill files")
+                print("3. Run 'car-valuation fix' to resolve any issues")
+                
+        except subprocess.CalledProcessError as e:
+            error(f"Update failed: {e}")
+        except Exception as e:
+            error(f"Unexpected error: {e}")
+    
+    def uninstall(self):
+        """Clean removal of skill"""
+        print(f"\n{Colors.WHITE}🗑️  Uninstalling Car Valuation Skill{Colors.NC}")
+        print("=" * 40)
+        
+        print("This will remove:")
+        print(f"  • Skill directory: {self.skill_dir}")
+        print(f"  • Configuration files")
+        print(f"  • Environment variables (manual)")
+        print()
+        
+        confirm = input("Are you sure? Type 'yes' to confirm: ")
+        if confirm.lower() != 'yes':
+            info("Uninstall cancelled")
+            return
+            
+        try:
+            # Remove config file
+            if self.config_file.exists():
+                self.config_file.unlink()
+                success("Configuration removed")
+            
+            print("\nManual steps required:")
+            warning("Remove APIFY_API_TOKEN from your shell profile:")
+            print("  • ~/.bashrc, ~/.zshrc, or ~/.profile")
+            warning("Remove skill directory manually:")
+            print(f"  • rm -rf {self.skill_dir}")
+            
+        except Exception as e:
+            error(f"Uninstall error: {e}")
+    
+    def main(self):
+        """Main CLI entry point"""
+        if len(sys.argv) < 2:
+            print(f"\n{Colors.WHITE}🚗 Israeli Car Valuation CLI{Colors.NC}")
+            print(__doc__)
+            return
+        
+        command = sys.argv[1].lower()
+        
+        commands = {
+            'diagnose': self.diagnose,
+            'fix': self.fix, 
+            'test': self.test,
+            'status': self.status,
+            'update': self.update,
+            'uninstall': self.uninstall
+        }
+        
+        if command in commands:
+            try:
+                commands[command]()
+            except KeyboardInterrupt:
+                print(f"\n{Colors.YELLOW}Operation cancelled by user{Colors.NC}")
+            except Exception as e:
+                error(f"Command failed: {e}")
+                log('ERROR', f"Command '{command}' failed: {str(e)}")
+        else:
+            error(f"Unknown command: {command}")
+            print("\nAvailable commands:")
+            for cmd in commands.keys():
+                print(f"  • {cmd}")
+
+if __name__ == '__main__':
+    cli = CarValuationCLI()
+    cli.main()

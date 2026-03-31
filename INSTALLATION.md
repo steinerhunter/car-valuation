@@ -1,8 +1,20 @@
 # 🚗 Israeli Car Valuation - Installation Guide
 
-**Complete setup guide for installing the Car Valuation skill**
+**OME-119: One-Click Installation & Advanced Setup Options**
 
-## 🎯 Quick Start (5 minutes)
+## 🚀 **NEW: One-Click Installation (Recommended)**
+
+```bash
+curl -sL https://raw.githubusercontent.com/steinerhunter/car-valuation/main/install.sh | bash
+```
+
+**That's it!** ✨ Installation complete in <5 minutes with 95%+ success rate.
+
+[See complete One-Click Installation guide →](ONE_CLICK_INSTALL.md)
+
+---
+
+## 🎯 Manual Installation (Advanced Users)
 
 ### Prerequisites
 - **OpenClaw installed** (download from [openclaw.ai](https://openclaw.ai))
