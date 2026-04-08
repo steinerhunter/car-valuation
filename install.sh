@@ -3,6 +3,11 @@
 # =====================================================
 # OME-119: Transform installation from 6 manual steps to 1 command
 # Target: 95% success rate, <5 minutes, works on all platforms
+#
+# Usage:
+#   ./install.sh              # Full installation
+#   ./install.sh --dry-run    # Preview what would be installed
+#   ./install.sh --help      # Show this help
 
 set -euo pipefail  # Exit on errors, undefined vars, pipe failures
 
@@ -22,6 +27,8 @@ GITHUB_REPO="https://github.com/steinerhunter/car-valuation.git"
 OPENCLAW_SKILLS_DIR=""
 APIFY_TOKEN=""
 LOG_FILE="/tmp/car-valuation-install.log"
+DRY_RUN=false
+VERBOSE=false
 
 # Progress tracking
 TOTAL_STEPS=7
@@ -29,7 +36,7 @@ CURRENT_STEP=0
 
 # Utility functions
 log() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE"
+    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" | tee -a "$LOG_FILE" 2>/dev/null || true
 }
 
 step() {
@@ -59,6 +66,25 @@ info() {
     echo -e "${CYAN}ℹ️  $1${NC}"
 }
 
+# DRY RUN functions - these show what would happen without making changes
+dry_step() {
+    CURRENT_STEP=$((CURRENT_STEP + 1))
+    echo
+    echo -e "${PURPLE}[${CURRENT_STEP}/${TOTAL_STEPS}]${NC} ${WHITE}$1${NC} ${YELLOW}[DRY RUN - Would execute]${NC}"
+}
+
+dry_info() {
+    echo -e "${CYAN}  → $1${NC}"
+}
+
+dry_cmd() {
+    echo -e "${CYAN}  $ $1${NC}"
+}
+
+dry_success() {
+    echo -e "${GREEN}  ✅ $1${NC}"
+}
+
 # Progress bar function
 progress_bar() {
     local current=$1
@@ -74,8 +100,69 @@ progress_bar() {
     printf "${BLUE}] %d%%${NC}" "$percentage"
 }
 
+# Parse command line arguments
+parse_args() {
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --dry-run|--preview|--simulate)
+                DRY_RUN=true
+                shift
+                ;;
+            --verbose|-v)
+                VERBOSE=true
+                shift
+                ;;
+            --help|-h)
+                show_help
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}Unknown option: $1${NC}"
+                echo "Use --help for usage information"
+                exit 1
+                ;;
+        esac
+    done
+}
+
+show_help() {
+    echo -e "${WHITE}╔════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${WHITE}║         🚗 Israeli Car Valuation - Installation Script           ║${NC}"
+    echo -e "${WHITE}╚════════════════════════════════════════════════════════════════════╝${NC}"
+    echo
+    echo -e "${CYAN}USAGE:${NC}"
+    echo -e "  ${WHITE}./install.sh${NC}              ${CYAN}Run full installation${NC}"
+    echo -e "  ${WHITE}./install.sh --dry-run${NC}    ${CYAN}Preview what would be installed${NC}"
+    echo -e "  ${WHITE}./install.sh --help${NC}       ${CYAN}Show this help message${NC}"
+    echo
+    echo -e "${CYAN}OPTIONS:${NC}"
+    echo -e "  ${WHITE}--dry-run, --preview${NC}      Preview mode (no changes made)"
+    echo -e "  ${WHITE}--verbose, -v${NC}             Verbose output"
+    echo -e "  ${WHITE}--help, -h${NC}                Show this help message"
+    echo
+    echo -e "${CYAN}EXAMPLES:${NC}"
+    echo -e "  ${GREEN}# Full installation${NC}"
+    echo -e "  ${WHITE}curl -sL https://raw.githubusercontent.com/steinerhunter/car-valuation/main/install.sh | bash${NC}"
+    echo
+    echo -e "  ${GREEN}# Preview installation (see what would happen)${NC}"
+    echo -e "  ${WHITE}curl -sL https://raw.githubusercontent.com/steinerhunter/car-valuation/main/install.sh | bash -s -- --dry-run${NC}"
+    echo
+}
+
 # System detection
 detect_system() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        dry_step "🔍 Detecting System Environment"
+        dry_info "Would detect: OS type, Python version, pip availability"
+        dry_cmd "Commands that would run:"
+        dry_cmd "  • uname -s"
+        dry_cmd "  • python3 --version"
+        dry_cmd "  • pip3 --version"
+        dry_info "Required: Python 3.8+, pip"
+        dry_success "System detection would complete"
+        return
+    fi
+    
     step "🔍 Detecting System Environment"
     
     # Detect OS
@@ -133,6 +220,18 @@ detect_system() {
 
 # Find OpenClaw installation
 find_openclaw() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        dry_step "📁 Locating OpenClaw Installation"
+        dry_info "Would search common OpenClaw locations:"
+        dry_cmd "  • ~/.openclaw/workspace/skills"
+        dry_cmd "  • ~/.openclaw/skills"
+        dry_cmd "  • ~/openclaw/workspace/skills"
+        dry_cmd "  • /opt/openclaw/workspace/skills"
+        dry_info "If not found, would prompt for custom path"
+        dry_success "OpenClaw detection would complete"
+        return
+    fi
+    
     step "📁 Locating OpenClaw Installation"
     
     # Common OpenClaw locations
@@ -172,6 +271,19 @@ find_openclaw() {
 
 # Clone or update skill repository
 install_skill() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        dry_step "📥 Installing Car Valuation Skill"
+        dry_info "Would perform the following:"
+        dry_cmd "  cd ~/.openclaw/workspace/skills  # or detected path"
+        dry_cmd "  rm -rf car-valuation  # if exists"
+        dry_cmd "  git clone https://github.com/steinerhunter/car-valuation.git"
+        dry_cmd "  cd car-valuation"
+        dry_info "Repository: https://github.com/steinerhunter/car-valuation"
+        dry_info "Would clone latest main branch"
+        dry_success "Skill installation would complete"
+        return
+    fi
+    
     step "📥 Installing Car Valuation Skill"
     
     cd "$OPENCLAW_SKILLS_DIR"
@@ -196,6 +308,18 @@ install_skill() {
 
 # Install Python dependencies
 install_dependencies() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        dry_step "📚 Installing Python Dependencies"
+        dry_info "Would perform the following:"
+        dry_cmd "  python3 -m venv .venv  # create virtual environment"
+        dry_cmd "  source .venv/bin/activate"
+        dry_cmd "  pip install -r requirements.txt"
+        dry_info "Virtual environment: .venv in skill directory"
+        dry_info "Would install all packages from requirements.txt"
+        dry_success "Dependency installation would complete"
+        return
+    fi
+    
     step "📚 Installing Python Dependencies"
     
     # Check if requirements.txt exists
@@ -231,6 +355,19 @@ install_dependencies() {
 
 # Interactive Apify setup
 setup_apify() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        dry_step "🔑 Setting up Apify API Access"
+        dry_info "Would perform interactive setup:"
+        dry_info "  1. Check for existing APIFY_API_TOKEN env var"
+        dry_info "  2. If not found, prompt user to create Apify account"
+        dry_info "  3. Validate token format (apify_api_...)"
+        dry_info "  4. Store token for later configuration"
+        dry_cmd "Apify signup: https://apify.com/sign-up"
+        dry_info "Token format: apify_api_XXXXXXXXXXXX"
+        dry_success "Apify setup would complete"
+        return
+    fi
+    
     step "🔑 Setting up Apify API Access"
     
     echo
@@ -340,6 +477,20 @@ manual_apify_setup() {
 
 # Configure environment
 configure_environment() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        dry_step "⚙️ Configuring Environment"
+        dry_info "Would perform the following:"
+        dry_cmd "  # Add to ~/.bashrc or ~/.zshrc:"
+        dry_cmd '  export APIFY_API_TOKEN="your-token-here"'
+        dry_cmd "  # Create .env file in skill directory"
+        dry_info "Would configure:"
+        dry_info "  • Shell profile (persistent env vars)"
+        dry_info "  • Local .env file (skill-level config)"
+        dry_info "  • Current session environment"
+        dry_success "Environment configuration would complete"
+        return
+    fi
+    
     step "⚙️ Configuring Environment"
     
     # Add to shell profile
@@ -373,7 +524,7 @@ configure_environment() {
 APIFY_API_TOKEN=$APIFY_TOKEN
 SKILL_VERSION=2.0
 INSTALLATION_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-INSTALLER_VERSION=1.0
+INSTALLER_VERSION=1.1
 EOF
 
     success "Local configuration created"
@@ -382,6 +533,20 @@ EOF
 
 # Test installation
 test_installation() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        dry_step "🧪 Testing Installation"
+        dry_info "Would perform the following tests:"
+        dry_cmd "  # Test 1: Python module imports"
+        dry_cmd "  python3 -c 'from scripts.car_valuation_api import CarValuationAPI'"
+        dry_cmd "  # Test 2: API connectivity"
+        dry_cmd "  python3 examples/basic_usage.py"
+        dry_cmd "  # Test 3: Configuration verification"
+        dry_cmd "  grep APIFY_API_TOKEN .env"
+        dry_info "Would run smoke tests to verify installation"
+        dry_success "Installation testing would complete"
+        return
+    fi
+    
     step "🧪 Testing Installation"
     
     echo "Running verification tests..."
@@ -426,12 +591,57 @@ except ImportError as e:
 
 # Main installation flow
 main() {
-    clear
+    # Parse arguments first
+    parse_args "$@"
+    
+    if [[ "$DRY_RUN" == "true" ]]; then
+        command -v clear >/dev/null 2>&1 && clear || true
+        echo
+        echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${YELLOW}║         🚗 DRY RUN - Installation Preview Mode                ║${NC}"
+        echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
+        echo
+        echo -e "${CYAN}This is a preview - no changes will be made.${NC}"
+        echo -e "${CYAN}To run actual installation, remove --dry-run flag.${NC}"
+        echo
+        
+        log "=== DRY RUN: Israeli Car Valuation Installation Preview ==="
+        log "OS: $OSTYPE"
+        log "User: $(whoami)"
+        log "Dry run: true"
+        
+        CURRENT_STEP=0
+        
+        detect_system
+        find_openclaw  
+        install_skill
+        install_dependencies
+        setup_apify
+        configure_environment
+        test_installation
+        
+        echo
+        echo -e "${YELLOW}╔════════════════════════════════════════════════════════════════════╗${NC}"
+        echo -e "${YELLOW}║                    🎯 DRY RUN COMPLETE                         ║${NC}"
+        echo -e "${YELLOW}╚════════════════════════════════════════════════════════════════════╝${NC}"
+        echo
+        echo -e "${CYAN}To run actual installation:${NC}"
+        echo -e "  ${WHITE}curl -sL https://raw.githubusercontent.com/steinerhunter/car-valuation/main/install.sh | bash${NC}"
+        echo
+        echo -e "${CYAN}To see available options:${NC}"
+        echo -e "  ${WHITE}curl -sL https://raw.githubusercontent.com/steinerhunter/car-valuation/main/install.sh | bash -s -- --help${NC}"
+        echo
+        
+        log "=== DRY RUN completed ==="
+        exit 0
+    fi
+    
+    command -v clear >/dev/null 2>&1 && clear || true
     echo
-    echo -e "${WHITE}╔════════════════════════════════════════════════════╗${NC}"
-    echo -e "${WHITE}║           🚗 Israeli Car Valuation Installer      ║${NC}"
-    echo -e "${WHITE}║                One-Click Installation              ║${NC}"
-    echo -e "${WHITE}╚════════════════════════════════════════════════════╝${NC}"
+    echo -e "${WHITE}╔════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${WHITE}║           🚗 Israeli Car Valuation Installer                    ║${NC}"
+    echo -e "${WHITE}║                One-Click Installation                          ║${NC}"
+    echo -e "${WHITE}╚════════════════════════════════════════════════════════════════════╝${NC}"
     echo
     echo -e "${CYAN}Transform installation from 6 manual steps to 1 command!${NC}"
     echo -e "${CYAN}Target: 95% success rate • <5 minutes • All platforms${NC}"
@@ -454,9 +664,9 @@ main() {
     
     # Success message
     echo
-    echo -e "${GREEN}╔════════════════════════════════════════════════════╗${NC}"
-    echo -e "${GREEN}║               🎉 Installation Complete!           ║${NC}"  
-    echo -e "${GREEN}╚════════════════════════════════════════════════════╝${NC}"
+    echo -e "${GREEN}╔════════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${GREEN}║               🎉 Installation Complete!                          ║${NC}"  
+    echo -e "${GREEN}╚════════════════════════════════════════════════════════════════════╝${NC}"
     echo
     echo -e "${WHITE}🚗 Israeli Car Valuation is now ready!${NC}"
     echo
