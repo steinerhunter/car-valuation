@@ -47,7 +47,7 @@ step() {
     CURRENT_STEP=$((CURRENT_STEP + 1))
     echo
     echo -e "${PURPLE}[${CURRENT_STEP}/${TOTAL_STEPS}]${NC} ${WHITE}$1${NC}"
-    log "STEP ${CURRENT_STEP}/${CURRENT_STEPS}: $1"
+    log "STEP ${CURRENT_STEP}/${TOTAL_STEPS}: $1"
 }
 
 success() {
