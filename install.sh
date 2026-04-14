@@ -8,6 +8,10 @@
 #   ./install.sh              # Full installation
 #   ./install.sh --dry-run    # Preview what would be installed
 #   ./install.sh --help      # Show this help
+#
+# CHANGE LOG (v1.2):
+# - Fixed interactive prompts to work with curl | bash pipes (uses /dev/tty)
+# - Added detection for existing APIFY_API_TOKEN in environment or .env file
 
 set -euo pipefail  # Exit on errors, undefined vars, pipe failures
 
@@ -43,7 +47,7 @@ step() {
     CURRENT_STEP=$((CURRENT_STEP + 1))
     echo
     echo -e "${PURPLE}[${CURRENT_STEP}/${TOTAL_STEPS}]${NC} ${WHITE}$1${NC}"
-    log "STEP ${CURRENT_STEP}/${TOTAL_STEPS}: $1"
+    log "STEP ${CURRENT_STEP}/${CURRENT_STEPS}: $1"
 }
 
 success() {
@@ -64,6 +68,18 @@ error() {
 
 info() {
     echo -e "${CYAN}ℹ️  $1${NC}"
+}
+
+# Helper for reading input that works with piped curl | bash
+readInput() {
+    local prompt="$1"
+    local varName="$2"
+    # Try /dev/tty first (works with curl | bash), fall back to stdin
+    if [ -t 0 ] || [ -e /dev/tty ]; then
+        read -p "$prompt" "$varName" < /dev/tty
+    else
+        read -p "$prompt" "$varName"
+    fi
 }
 
 # DRY RUN functions - these show what would happen without making changes
@@ -143,6 +159,9 @@ show_help() {
     echo -e "${CYAN}EXAMPLES:${NC}"
     echo -e "  ${GREEN}# Full installation${NC}"
     echo -e "  ${WHITE}curl -sL https://raw.githubusercontent.com/steinerhunter/car-valuation/main/install.sh | bash${NC}"
+    echo
+    echo -e "  ${GREEN}# With existing API token${NC}"
+    echo -e "  ${WHITE}export APIFY_API_TOKEN=your_token && curl -sL https://... | bash${NC}"
     echo
     echo -e "  ${GREEN}# Preview installation (see what would happen)${NC}"
     echo -e "  ${WHITE}curl -sL https://raw.githubusercontent.com/steinerhunter/car-valuation/main/install.sh | bash -s -- --dry-run${NC}"
@@ -258,7 +277,7 @@ find_openclaw() {
     echo
     warning "OpenClaw skills directory not found in common locations."
     echo -e "${CYAN}Please enter your OpenClaw skills directory path:${NC}"
-    read -p "Skills directory: " user_path
+    read -p "Skills directory: " user_path </dev/tty || read -p "Skills directory: " user_path
     
     if [ -d "$user_path" ]; then
         OPENCLAW_SKILLS_DIR="$user_path"
@@ -358,7 +377,7 @@ setup_apify() {
     if [[ "$DRY_RUN" == "true" ]]; then
         dry_step "🔑 Setting up Apify API Access"
         dry_info "Would perform interactive setup:"
-        dry_info "  1. Check for existing APIFY_API_TOKEN env var"
+        dry_info "  1. Check for existing APIFY_API_TOKEN env var or .env file"
         dry_info "  2. If not found, prompt user to create Apify account"
         dry_info "  3. Validate token format (apify_api_...)"
         dry_info "  4. Store token for later configuration"
@@ -375,13 +394,25 @@ setup_apify() {
     echo -e "${CYAN}We need an Apify account for live market data scraping.${NC}"
     echo
     
-    # Check if token already exists
+    # Check if token already exists in environment
     if [ ! -z "${APIFY_API_TOKEN:-}" ]; then
         info "Existing APIFY_API_TOKEN found in environment"
         APIFY_TOKEN="$APIFY_API_TOKEN"
         success "Using existing Apify token"
         progress_bar 5 $TOTAL_STEPS
         return
+    fi
+    
+    # Check for existing .env file in current directory
+    if [ -f ".env" ] && grep -q "APIFY_API_TOKEN" .env 2>/dev/null; then
+        info "Found existing .env file with APIFY_API_TOKEN"
+        source .env
+        if [ ! -z "${APIFY_API_TOKEN:-}" ]; then
+            APIFY_TOKEN="$APIFY_API_TOKEN"
+            success "Using APIFY_TOKEN from .env file"
+            progress_bar 5 $TOTAL_STEPS
+            return
+        fi
     fi
     
     echo -e "${YELLOW}Option 1: Automatic Setup (Recommended)${NC}"
@@ -393,7 +424,7 @@ setup_apify() {
     echo "  • You provide existing Apify token"
     echo
     
-    read -p "Choose setup method (1 for automatic, 2 for manual): " setup_choice
+    read -p "Choose setup method (1 for automatic, 2 for manual): " setup_choice </dev/tty || read -p "Choose setup method (1 for automatic, 2 for manual): " setup_choice
     
     case $setup_choice in
         1)
@@ -438,11 +469,11 @@ automatic_apify_setup() {
     echo "4. 📋 Copy the token (starts with 'apify_api_')"
     echo
     
-    read -p "Press ENTER when you have your API token ready..."
+    read -p "Press ENTER when you have your API token ready..." </dev/tty || read -p "Press ENTER when you have your API token ready..."
     echo
     
     while true; do
-        read -p "🔑 Paste your Apify API token: " token
+        read -p "🔑 Paste your Apify API token: " token </dev/tty || read -p "🔑 Paste your Apify API token: " token
         
         # Validate token format
         if [[ $token =~ ^apify_api_[a-zA-Z0-9]{40,}$ ]]; then
@@ -463,7 +494,7 @@ manual_apify_setup() {
     echo
     
     while true; do
-        read -p "🔑 Enter your Apify API token: " token
+        read -p "🔑 Enter your Apify API token: " token </dev/tty || read -p "🔑 Enter your Apify API token: " token
         
         if [[ $token =~ ^apify_api_[a-zA-Z0-9]{40,}$ ]]; then
             APIFY_TOKEN="$token"
@@ -524,7 +555,7 @@ configure_environment() {
 APIFY_API_TOKEN=$APIFY_TOKEN
 SKILL_VERSION=2.0
 INSTALLATION_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-INSTALLER_VERSION=1.1
+INSTALLER_VERSION=1.2
 EOF
 
     success "Local configuration created"
